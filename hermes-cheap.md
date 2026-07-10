@@ -1,6 +1,6 @@
 # 🏆 Hermes-Cheap: Süper Cimri Hermes Agent Rehberi
 
-> Hermes AI Agent v0.18.2'yi **ilk sorguda ~4.2K token** tüketecek şekilde optimize etme kılavuzu.
+> Hermes AI Agent v0.18.2'yi **ilk sorguda ~5.2K token** tüketecek şekilde optimize etme kılavuzu.
 > Orijinal ~20-30K token'dan **%80+ tasarruf**.
 
 ## 📊 Kazanım Tablosu
@@ -9,10 +9,10 @@
 |---|---|---|---|
 | Skills disk | 6.7 MB | 76 KB | **%99** |
 | Skills snapshot (prompt) | 42 KB | 0.5 KB | **%99** |
-| Tool schemas | ~70 KB | 7.2 KB | **%90** |
-| System prompt | ~50 KB | 5.2 KB | **%90** |
-| Aktif tool sayısı | 30+ | 10 | **%67** |
-| **İlk sorgu token** | **~20-30K** | **~4.2K** | **~%80** |
+| Tool schemas | ~70 KB | 9.0 KB | **%87** |
+| System prompt | ~50 KB | 7.0 KB | **%86** |
+| Aktif tool sayısı | 30+ | 12 | **%60** |
+| **İlk sorgu token** | **~20-30K** | **~5.2K** | **~%80** |
 
 ---
 
@@ -95,8 +95,12 @@ compression:
 prompt_caching:
   cache_ttl: 5m
 memory:
-  memory_enabled: false      # Kalıcı hafıza kapalı
-  user_profile_enabled: false
+  memory_enabled: true
+  user_profile_enabled: true
+  memory_char_limit: 1500    # Varsayılan 2200 → daha tutumlu
+  user_char_limit: 1000      # Varsayılan 1375 → daha tutumlu
+  nudge_interval: 15         # 10 → 15 (daha az hatırlatma)
+  flush_min_turns: 10        # 6 → 10 (daha seyrek yazma)
 agent:
   max_turns: 25              # 60 → 25
   tool_use_enforcement: false
@@ -121,6 +125,8 @@ platform_toolsets:
     - web
     - clarify
     - skills
+    - memory
+    - session_search
 display:
   compact: true
   personality: concise       # Daha kısa cevaplar
@@ -393,19 +399,20 @@ System prompt **byte-stable** olduğu için DeepSeek'in prefix caching'inden fay
 | `kanban` | kanban_show, complete... | Multi-agent koordinasyon gerekmiyor |
 | `cronjob` | cronjob | Zamanlanmış görev gerekmiyor |
 | `tts` | text_to_speech | Ses sentezi gerekmiyor |
-| `memory` | memory | Kalıcı hafıza kapalı |
-| `session_search` | session_search | Geçmiş konuşma arama kapalı |
 | `vision` | vision_analyze | Görsel analiz gerekmiyor |
 | `code_execution` | execute_code | Terminal alternatifi var |
 | `delegation` | delegate_task | Alt-agent gerekmiyor |
 | `discord` / `homeassistant` vs. | platform tools | Kullanılmıyor |
 
-**Kalanlar (10 tool):**
+**Aktif olanlar (12 tool):**
 - **terminal:** terminal, process
 - **file:** read_file, write_file, patch, search_files
 - **web:** web_search, web_extract
 - **clarify:** clarify
 - **skills:** skills_list, skill_view, skill_manage
+- **memory:** memory
+- **session_search:** session_search
+- **NOT:** session_search için guidance + schema ~500 token, memory için ~500-1500 token
 
 ---
 
@@ -457,5 +464,5 @@ rm -f ~/.hermes/.skills_prompt_snapshot.json
 
 ---
 
-> **Sonuç: İlk sorgu ~4.2K token. Orijinalin ~%15'i.**
+> **Sonuç: İlk sorgu ~5.2K token. Orijinalin ~%20'si.**
 > **Bonus: Akıllı shell fonksiyonu ile proje context'i otomatik, token israfı yok.**
