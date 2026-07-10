@@ -85,7 +85,7 @@ model:
 terminal:
   backend: local
   cwd: .
-  timeout: 180
+  timeout: 300
 compression:
   enabled: true
   threshold: 0.3           # %50 → %30 (daha erken devreye girer)
@@ -104,6 +104,16 @@ agent:
   parallel_tool_call_guidance: false
   environment_probe: false   # Python ortam sorgulaması kapalı
   skip_context_files: true   # AGENTS.md/.cursorrules taranmaz
+tool_loop_guardrails:
+  hard_stop_enabled: true    # Sonsuz döngüyü engelle (güvenlik)
+  warn_after:
+    exact_failure: 3
+    same_tool_failure: 5
+    idempotent_no_progress: 3
+  hard_stop_after:
+    exact_failure: 8
+    same_tool_failure: 12
+    idempotent_no_progress: 8
 platform_toolsets:
   cli:
     - terminal
@@ -113,8 +123,11 @@ platform_toolsets:
     - skills
 display:
   compact: true
+  personality: concise       # Daha kısa cevaplar
   tool_progress: minimal
   show_reasoning: false
+  busy_input_mode: steer     # Araç çalışırken yönlendirme yapabilme
+  streaming: true
 ```
 
 ### Kapatılan Guidance Bloklarının Açıklaması
@@ -192,7 +205,35 @@ Snapshot otomatik yeniden oluşur. Prompt'ta sadece skill adları ve kısa açı
 
 ---
 
-## 📝 4. SOUL.md (Kimlik)
+## 🎭 4. Token Dışı İyileştirmeler (Kullanıcı Deneyimi)
+
+### `display.personality: concise`
+Sisteme **"Keep responses brief and to the point"** talimatını ekler.
+- **Maliyet:** ~15 token (input)
+- **Kazanç:** Çok daha kısa cevaplar → completion token'larında büyük tasarruf
+- **Net:** Pozitif ✅
+
+### `display.busy_input_mode: steer`
+**En güçlü özellik!** Agent araç çalıştırırken (terminal, web, dosya işlemleri) 
+sen yazmaya devam edebilirsin. Yazdıkların **mid-turn steering** olarak agent'a 
+iletilir — anında yönlendirme yapabilirsin.
+
+Örnek: Agent bir dosyayı analiz ederken sen "şu fonksiyona da bak" yazarsın,
+o anki işi bitince hemen yeni talimatı alır. Beklemene gerek kalmaz.
+
+### `tool_loop_guardrails.hard_stop_enabled: true`
+Agent aynı tool'da tekrar tekrar hata alırsa (örn. internet yok, terminal kilitli),
+**sonsuz döngüyü otomatik keser** ve sana bildirir.
+- 3 başarısız deneme → uyarı
+- 8 başarısız deneme → hard stop, sebebini açıkla
+
+### `terminal.timeout: 300`
+Uzun süren build'ler, testler, deployment'lar için 5 dakika.
+180 saniye bazen yetmez (özellikle büyük npm/pip install'ler).
+
+---
+
+## 📝 5. SOUL.md (Kimlik)
 
 `~/.hermes/SOUL.md` dosyasını ultra kısa yap:
 
@@ -205,7 +246,7 @@ for file ops, terminal, web, and code. Be brief and direct.
 
 ---
 
-## 🧹 5. .env Temizliği
+## 🧹 6. .env Temizliği
 
 `~/.hermes/.env` dosyasında sadece gerçekten kullanılan değişkenleri tut:
 
@@ -219,7 +260,7 @@ tool'ları etkilemez ama kafa karıştırır.
 
 ---
 
-## 🔄 6. Alias
+## 🔄 7. Alias
 
 `.zshrc`'ye ekle:
 
@@ -232,7 +273,7 @@ Orijinal Hermes'e ihtiyacın olursa: `~/.local/bin/hermes chat`
 
 ---
 
-## 🧠 Mimari Bilgisi (Neden Çalışıyor)
+## 🧠 8. Mimari Bilgisi (Neden Çalışıyor)
 
 ### Sistem Promptu 3 Kademeli
 
@@ -250,7 +291,7 @@ System prompt **byte-stable** olduğu için DeepSeek'in prefix caching'inden fay
 
 ---
 
-## 🚫 Kapatılan Toolset'ler
+## 🚫 9. Kapatılan Toolset'ler
 
 | Toolset | Tool'lar | Neden kapatıldı |
 |---|---|---|
@@ -276,7 +317,7 @@ System prompt **byte-stable** olduğu için DeepSeek'in prefix caching'inden fay
 
 ---
 
-## 📊 Token Hesaplama Pratiği
+## 📊 10. Token Hesaplama Pratiği
 
 ```bash
 # Prompt boyutunu ölç
@@ -290,7 +331,7 @@ hermes prompt-size
 
 ---
 
-## 🔄 Güncelleme Sonrası Yapılması Gerekenler
+## 🔄 11. Güncelleme Sonrası Yapılması Gerekenler
 
 1. `hermes-cheap` wrapper'ı **etkilenmez** — çalışmaya devam eder
 2. Skills sync **kapalı** kalır (`.no-bundled-skills` marker'ı duruyorsa)
@@ -299,7 +340,7 @@ hermes prompt-size
 
 ---
 
-## 🎯 Özet: Yapılacaklar Listesi (Yeni Kurulumda)
+## 🎯 12. Özet: Yapılacaklar Listesi (Yeni Kurulumda)
 
 ```bash
 # 1. Wrapper
