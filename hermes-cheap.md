@@ -233,20 +233,82 @@ Uzun süren build'ler, testler, deployment'lar için 5 dakika.
 
 ---
 
-## 📝 5. SOUL.md (Kimlik)
+## 📝 5. SOUL.md (Kimlik + Davranış Kuralları)
 
-`~/.hermes/SOUL.md` dosyasını ultra kısa yap:
+`~/.hermes/SOUL.md` hem kimlik hem de agent'ın davranış kurallarını belirler.
+Sadece "kimsin" değil, "nasıl davranmalısın" da burada.
+
+### Önerilen Versiyon
 
 ```markdown
-You are Hermes, a concise AI assistant. Help users efficiently by using tools
-for file ops, terminal, web, and code. Be brief and direct.
+You are Hermes, a concise AI assistant.
+- Prefer terminal, file, and web tools over guessing
+- Turkish query → Turkish response; English → English
+- Verify results proactively (run the code, check output)
+- When stuck: retry once with a different approach, then report clearly
+- Keep responses brief and direct
 ```
 
-138 byte ile yetin. Orijinali 514 byte'dı.
+**Neden bu kadar etkili:**
+- "retry once differently" → tek hata sonrası pes etmez, farklı dener
+- "verify proactively" → "şimdi çalıştırayım mı?" sorusunu ortadan kaldırır
+- "Turkish → Turkish" → Türkçe sorunca İngilizce cevap vermez
+- Maliyet: 311 byte (~75 token) — çok küçük bir maliyet
+
+### Ultra Minimal Versiyon (Token Kritikse)
+
+```markdown
+You are Hermes, a concise AI assistant. Be brief and direct.
+Prefer tools over guessing. Turkish → Turkish, English → English.
+```
+
+138 byte. Sadece temel yönergeler.
 
 ---
 
-## 🧹 6. .env Temizliği
+## 📁 6. Proje Context Dosyası (.hermes.md)
+
+Proje bazlı bilgi vermek için projenin köküne `.hermes.md` koy.
+Hermes git root'a kadar otomatik bulur.
+
+### Önerilen Şablon
+
+```markdown
+# Project: <name>
+Tech stack: <languages, frameworks>
+Conventions: <style rules, indent, naming>
+Commands:
+  build:   <build command>
+  test:    <test command>
+  lint:    <lint command>
+```
+
+### Notes Reposu İçin Örnek
+
+```markdown
+# Notes
+Personal notes, guides, and references repository.
+
+## Commands
+  preview:  (none — pure Markdown)
+  publish:  git push origin master
+
+## Conventions
+- Markdown files (.md) with UTF-8
+- Turkish content for personal notes
+- File names: kebab-case
+```
+
+Maliyet: ~300 byte (~75 token) — proje bağlamı için çok değerli.
+
+### Akıllı Kullanım
+
+Shell fonksiyonu (bkz. 🔄 7.) `.hermes.md` olan dizinlerde **otomatik context açar**,
+olmayanlarda token tasarrufu için kapalı tutar. Manuel config değiştirmene gerek kalmaz.
+
+---
+
+## 🧹 7. .env Temizliği
 
 `~/.hermes/.env` dosyasında sadece gerçekten kullanılan değişkenleri tut:
 
@@ -260,20 +322,50 @@ tool'ları etkilemez ama kafa karıştırır.
 
 ---
 
-## 🔄 7. Alias
+## 🔄 7. Akıllı Shell Entegrasyonu
 
-`.zshrc`'ye ekle:
+### Tavsiye: Fonksiyon (Alias Yerine)
+
+Alias yerine **akıllı shell fonksiyonu** — CWD'de `.hermes.md`, `AGENTS.md`, `.cursorrules` varsa
+otomatik context'i açar, yoksa token tasarrufu için kapalı tutar.
+
+```bash
+# Smart Hermes: auto-detects context files in CWD
+hermes() {
+  local has_context=0
+  local dir="$PWD"
+  while [ "$dir" != "/" ]; do
+    if [ -f "$dir/.hermes.md" ] || [ -f "$dir/HERMES.md" ] || [ -f "$dir/AGENTS.md" ] || [ -f "$dir/.cursorrules" ]; then
+      has_context=1
+      break
+    fi
+    dir="$(dirname "$dir")"
+  done
+
+  if [ "$has_context" = "1" ]; then
+    HERMES_CONTEXT_FILES=1 hermes-cheap "$@"
+  else
+    hermes-cheap "$@"
+  fi
+}
+```
+
+**Nasıl çalışır:**
+- Proje dizininde `.hermes.md` varsa → context aktif, proje bilgisi prompt'a eklenir
+- Rastgele bir dizinde → context kapalı, token tasarrufu
+- Git root'a kadar arar (alt dizinler dahil)
+
+### Basit Alternatif: Alias
+
+İsteyen sadece alias kullanabilir:
 
 ```bash
 alias hermes="hermes-cheap"
 ```
 
-Böylece `hermes chat` yazdığında otomatik cimri modda çalışır.
-Orijinal Hermes'e ihtiyacın olursa: `~/.local/bin/hermes chat`
-
 ---
 
-## 🧠 8. Mimari Bilgisi (Neden Çalışıyor)
+## 🧠 9. Mimari Bilgisi (Neden Çalışıyor)
 
 ### Sistem Promptu 3 Kademeli
 
@@ -291,7 +383,7 @@ System prompt **byte-stable** olduğu için DeepSeek'in prefix caching'inden fay
 
 ---
 
-## 🚫 9. Kapatılan Toolset'ler
+## 🚫 10. Kapatılan Toolset'ler
 
 | Toolset | Tool'lar | Neden kapatıldı |
 |---|---|---|
@@ -317,7 +409,7 @@ System prompt **byte-stable** olduğu için DeepSeek'in prefix caching'inden fay
 
 ---
 
-## 📊 10. Token Hesaplama Pratiği
+## 📊 11. Token Hesaplama Pratiği
 
 ```bash
 # Prompt boyutunu ölç
@@ -331,7 +423,7 @@ hermes prompt-size
 
 ---
 
-## 🔄 11. Güncelleme Sonrası Yapılması Gerekenler
+## 🔄 12. Güncelleme Sonrası Yapılması Gerekenler
 
 1. `hermes-cheap` wrapper'ı **etkilenmez** — çalışmaya devam eder
 2. Skills sync **kapalı** kalır (`.no-bundled-skills` marker'ı duruyorsa)
@@ -340,14 +432,14 @@ hermes prompt-size
 
 ---
 
-## 🎯 12. Özet: Yapılacaklar Listesi (Yeni Kurulumda)
+## 🎯 13. Özet: Yapılacaklar Listesi (Yeni Kurulumda)
 
 ```bash
 # 1. Wrapper
 chmod +x ~/.local/bin/hermes-cheap
 
-# 2. Alias
-echo 'alias hermes="hermes-cheap"' >> ~/.zshrc
+# 2. Shell fonksiyonu (önerilen, alias yerine)
+# .zshrc'ye akıllı fonksiyonu ekle (bkz. bölüm 7)
 
 # 3. Skills
 hermes skills opt-out
@@ -356,12 +448,14 @@ rm -rf ~/.hermes/skills/software-development/{node-inspect-debugger,python-debug
 rm -f ~/.hermes/.skills_prompt_snapshot.json
 
 # 4. Config (yukarıdaki gibi)
-# 5. SOUL.md (kısa versiyon)
-# 6. .env (sadece API key)
-# 7. source ~/.zshrc
-# 8. Test: hermes-cheap prompt-size
+# 5. SOUL.md (iyileştirilmiş versiyon)
+# 6. .hermes.md (proje bazlı, isteğe bağlı)
+# 7. .env (sadece API key)
+# 8. source ~/.zshrc
+# 9. Test: hermes-cheap prompt-size
 ```
 
 ---
 
 > **Sonuç: İlk sorgu ~4.2K token. Orijinalin ~%15'i.**
+> **Bonus: Akıllı shell fonksiyonu ile proje context'i otomatik, token israfı yok.**
