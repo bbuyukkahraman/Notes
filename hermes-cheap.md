@@ -1,18 +1,18 @@
 # 🏆 Hermes-Cheap: Süper Cimri Hermes Agent Rehberi
 
-> Hermes AI Agent v0.18.2'yi **ilk sorguda ~4.5K token** tüketecek şekilde optimize etme kılavuzu.
-> Orijinal ~20-30K token'dan **%75+ tasarruf**.
+> Hermes AI Agent v0.18.2'yi **ilk sorguda ~4.2K token** tüketecek şekilde optimize etme kılavuzu.
+> Orijinal ~20-30K token'dan **%80+ tasarruf**.
 
 ## 📊 Kazanım Tablosu
 
 | Bileşen | Önce | Sonra | Kazanç |
 |---|---|---|---|
-| Skills disk | 6.7 MB | 172 KB | **%97** |
-| Skills snapshot (prompt) | 42 KB | ~2 KB | **%95** |
+| Skills disk | 6.7 MB | 76 KB | **%99** |
+| Skills snapshot (prompt) | 42 KB | 0.5 KB | **%99** |
 | Tool schemas | ~70 KB | 7.2 KB | **%90** |
-| System prompt | ~50 KB | 6.4 KB | **%87** |
+| System prompt | ~50 KB | 5.2 KB | **%90** |
 | Aktif tool sayısı | 30+ | 10 | **%67** |
-| **İlk sorgu token** | **~20-30K** | **~4.5K** | **~%80** |
+| **İlk sorgu token** | **~20-30K** | **~4.2K** | **~%80** |
 
 ---
 
@@ -145,20 +145,50 @@ Sadece ihtiyacın olanları tut:
 
 ```bash
 cd ~/.hermes/skills
-# Silinecekler (ihtiyacına göre değiştir)
+# Tüm gereksiz kategoriler
 rm -rf autonomous-ai-agents creative dogfood email github media \
-       mlops productivity research social-media computer-use
+       mlops productivity research social-media computer-use \
+       apple data-science note-taking smart-home
+
+# software-development içinde de gereksiz olanlar
+rm -rf software-development/node-inspect-debugger
+rm -rf software-development/python-debugpy
+rm -rf software-development/simplify-code
+
+# Kalanlar (sadece faydalı workflow'lar):
+#   test-driven-development, systematic-debugging, plan,
+#   spike, requesting-code-review, hermes-agent-skill-authoring
+
 # Snapshot'ı sıfırla
 rm -f ~/.hermes/.skills_prompt_snapshot.json
 ```
 
-**Önerilen tutulacaklar:** `apple`, `data-science`, `note-taking`, `smart-home`, `software-development`
+**Kalanlar (6 SKILL.md, 76 KB):**
+```
+software-development/
+├── test-driven-development
+├── systematic-debugging
+├── plan
+├── spike
+├── requesting-code-review
+└── hermes-agent-skill-authoring
+```
+
+**Gereksiz olanlar (silinenler):**
+```
+apple/           (apple-notes, reminders, findmy, imessage)
+data-science/    (jupyter)
+note-taking/     (obsidian)
+smart-home/      (openhue)
+node-inspect-debugger, python-debugpy, simplify-code
+```
 
 ### Skills Snapshot
 
 Snapshot otomatik yeniden oluşur. Prompt'ta sadece skill adları ve kısa açıklamaları yer alır:
-- 17 kategorili snapshot: **42 KB**
-- 5 kategorili snapshot: **~2 KB**
+- 17 kategori: **42 KB**
+- 5 kategori: **~2 KB**
+- 1 kategori (sadece software-development): **0.5 KB**
 
 ---
 
@@ -280,7 +310,8 @@ echo 'alias hermes="hermes-cheap"' >> ~/.zshrc
 
 # 3. Skills
 hermes skills opt-out
-rm -rf ~/.hermes/skills/{autonomous-ai-agents,creative,dogfood,email,github,media,mlops,productivity,research,social-media,computer-use}
+rm -rf ~/.hermes/skills/{autonomous-ai-agents,creative,dogfood,email,github,media,mlops,productivity,research,social-media,computer-use,apple,data-science,note-taking,smart-home}
+rm -rf ~/.hermes/skills/software-development/{node-inspect-debugger,python-debugpy,simplify-code}
 rm -f ~/.hermes/.skills_prompt_snapshot.json
 
 # 4. Config (yukarıdaki gibi)
@@ -292,4 +323,4 @@ rm -f ~/.hermes/.skills_prompt_snapshot.json
 
 ---
 
-> **Sonuç: İlk sorgu ~4.5K token. Orijinalin ~%20'si.**
+> **Sonuç: İlk sorgu ~4.2K token. Orijinalin ~%15'i.**
